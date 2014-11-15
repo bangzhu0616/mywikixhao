@@ -24,9 +24,7 @@ jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir),
 
 from google.appengine.ext import db
 
-import signup
-
-loginflag = 0
+from signup import *
 
 class WikiHandler(webapp2.RequestHandler):
 	def write(self, *a, **kw):
@@ -65,18 +63,18 @@ class Signup(WikiHandler):
 
 		params = dict(username=username, email=email)
 
-		if not signup.verify_username(username):
+		if not verify_username(username):
 			params['error_username'] = "That's not a valid username."
 			haver_error = True
 
-		if not signup.verify_pwd(password):
+		if not verify_pwd(password):
 			params['error_verify'] = "That's not a valid password."
 			have_error = True
-		elif not signup.match_pwd(password, verify):
+		elif not match_pwd(password, verify):
 			params['error_verify'] = "Your password do not match."
 			have_error = True
 
-		if not signup.verify_em(email):
+		if not verify_em(email):
 			params['error_email'] = "That's not a valid email."
 			have_error = True
 
@@ -88,11 +86,10 @@ class Signup(WikiHandler):
 				self.render('signup.html', error_username="That user already exists.")
 			else:
 				newuser = User(username=username,
-								password=signup.make_pw_salt(username,password),
+								password=make_pw_salt(username,password),
 								email=email)
 				newuser.put()
-				global loginflag
-				loginflag = 1
+				set_secure_cookie(self, 'user_id', str(user.key().id()))
 				self.redirect('/')
 
 class Login(WikiHandler):
@@ -108,9 +105,8 @@ class Login(WikiHandler):
 			self.render('login.html',error_login=error)
 		else:
 			user_hash = user.password
-			if signup.check_pwd(username, password, user_hash):
-				global loginflag
-				loginflag = 1
+			if check_pwd(username, password, user_hash):
+				set_secure_cookie(self, 'user_id', str(user.key().id()))
 				self.redirect('/')
 			else:
 				self.render('login.html',error_login=error)
@@ -119,7 +115,17 @@ class FrontPage(WikiHandler):
 	def get(self):
 		global loginflag
 		fp = db.GqlQuery("select * from Pages where id = 1")
-		self.render('wikipage.html', login=loginflag, 
+		user = self.request.cookies.get('user_id')
+		if user:
+			u_id = user.split('|')[0]
+			u_name = User.get_by_id(int(u_id))
+			if u_name and read_secure_cookie(self, 'user_id'):
+				self.render('wikipage.html', login=1, 
+									pagename='',
+									username=u_name.username,
+									pagecontent=fp)
+		else:
+			self.render('wikipage.html',login=0,
 									pagename='',
 									username='',
 									pagecontent=fp)

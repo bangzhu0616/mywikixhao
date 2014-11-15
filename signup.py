@@ -27,6 +27,9 @@ def verify_em(em):
 		return True
 	return EM_RE.match(em)
 
+def hash_pwd(s):
+	return hmac.new(secret,s).hexdigest()
+
 def make_salt():
 	return ''.join([random.choice(string.letters) for i in range(5)])
 
