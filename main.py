@@ -111,6 +111,11 @@ class Login(WikiHandler):
 			else:
 				self.render('login.html',error_login=error)
 
+class Logout(WikiHandler):
+	def get(self):
+		self.response.headers.add_header('Set-Cookie', "user_id=; Path=/")
+		self.redirect('/')
+
 class FrontPage(WikiHandler):
 	def get(self):
 		global loginflag
@@ -137,5 +142,6 @@ class MainHandler(webapp2.RequestHandler):
 app = webapp2.WSGIApplication([
     ('/', FrontPage),
     ('/signup', Signup),
-    ('/login', Login)
+    ('/login', Login),
+    ('/logout', Logout)
 ], debug=True)
