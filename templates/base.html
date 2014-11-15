@@ -6,23 +6,24 @@
 </head>
 
 <body>
-	<a href="/" class="main-title">Xiaofeng' Wiki</a>
-	<div class="edithistory">
-		{% if login %}
-			<a href="/_edit/{{pagename}}">edit</a>|
-		{% endif %}
-		<a href="/_history/{{pagename}}">history</a>
-	</div>
+	<div class="header">
+		<a href="/" class="main-title">Xiaofeng' Wiki</a>
+		<span class="edithistory">
+			{% if login %}
+				<a href="/_edit/{{pagename}}">edit</a>|
+			{% endif %}
+			<a href="/_history/{{pagename}}">history</a>
+		</span>
 
-	<div class="loginout">
-		{% if login %}
-			{{username}}(<a href="/logout">logout</a>)
-		{% else %}
-			<a href="/login">login</a>|
-			<a href="/signup">signup</a>
-		{% endif %}
+		<span class="loginout">
+			{% if login %}
+				{{username}}(<a href="/logout">logout</a>)
+			{% else %}
+				<a href="/login">login</a> |
+				<a href="/signup">signup</a>
+			{% endif %}
+		</span>
 	</div>
-
 
 	<div id="content">
 	{% block content %}

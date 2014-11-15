@@ -17,6 +17,9 @@
 import webapp2
 import jinja2
 import os
+import re
+
+PAGE_RE = r'(/(?:[a-zA-Z0-9_-]+/?)*)'
 
 template_dir = os.path.join(os.path.dirname(__file__), "templates")
 jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir),
