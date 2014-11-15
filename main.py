@@ -92,7 +92,7 @@ class Signup(WikiHandler):
 								password=make_pw_salt(username,password),
 								email=email)
 				newuser.put()
-				set_secure_cookie(self, 'user_id', str(user.key().id()))
+				set_secure_cookie(self, 'user_id', str(newuser.key().id()))
 				self.redirect('/')
 
 class Login(WikiHandler):
