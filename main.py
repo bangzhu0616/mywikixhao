@@ -119,7 +119,8 @@ class Logout(WikiHandler):
 class FrontPage(WikiHandler):
 	def get(self):
 		global loginflag
-		fp = db.GqlQuery("select * from Pages where id = 1")
+		#fp = db.GqlQuery("select * from Pages where id = 1")
+		fp = Pages.all().filter('id =', 1).get()
 		user = self.request.cookies.get('user_id')
 		if user:
 			u_id = user.split('|')[0]
