@@ -2,6 +2,6 @@
 
 {% block content %}
 	<div class="pagecontent">
-		{{pagecontent.content}}
+		{{pagecontent.content | safe}}
 	</div>
 {% endblock %}
