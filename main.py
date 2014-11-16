@@ -19,8 +19,6 @@ import jinja2
 import os
 import re
 
-PAGE_RE = r'(/(?:[a-zA-Z0-9_-]+/?)*)'
-
 template_dir = os.path.join(os.path.dirname(__file__), "templates")
 jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir),
 										autoescape = True)
@@ -41,7 +39,7 @@ class WikiHandler(webapp2.RequestHandler):
 		self.write(self.render_str(template,**kw))
 
 class Pages(db.Model):
-	id = db.IntegerProperty(required = True)
+	id = db.IntegerProperty()
 	pagename = db.StringProperty()
 	content = db.TextProperty(required = True)
 	created = db.DateTimeProperty(auto_now_add = True)
@@ -119,33 +117,67 @@ class Logout(WikiHandler):
 		self.response.headers.add_header('Set-Cookie', "user_id=; Path=/")
 		self.redirect('/')
 
-class FrontPage(WikiHandler):
+class WikiPage(WikiHandler):
 	def get(self):
-		global loginflag
-		#fp = db.GqlQuery("select * from Pages where id = 1")
-		fp = Pages.all().filter('id =', 1).get()
+		path = self.request.path
+		pagename = path[1:]
+		fp = Pages.all().filter('pagename =', pagename).get()
+		user = self.request.cookies.get('user_id')
+		if fp:
+			if user:
+				u_id = user.split('|')[0]
+				u_name = User.get_by_id(int(u_id))
+				if u_name and read_secure_cookie(self, 'user_id'):
+					self.render('wikipage.html', login=1, 
+										pagename=pagename,
+										username=u_name.username,
+										pagecontent=fp)
+			else:
+				self.render('wikipage.html',login=0,
+										pagename=pagename,
+										username='',
+										pagecontent=fp)
+		else:
+			self.redirect('/_edit/'+pagename)
+
+class EditPage(WikiHandler):
+	def get(self):
+		path = self.request.path
+		pagename = path[7:]
+		fp = Pages.all().filter('pagename =', pagename).get()
 		user = self.request.cookies.get('user_id')
 		if user:
 			u_id = user.split('|')[0]
 			u_name = User.get_by_id(int(u_id))
 			if u_name and read_secure_cookie(self, 'user_id'):
-				self.render('wikipage.html', login=1, 
-									pagename='',
-									username=u_name.username,
-									pagecontent=fp)
+				self.render('editpage.html', login=1,
+								pagename = pagename,
+								username = u_name.username,
+								pagecontent=fp)
 		else:
-			self.render('wikipage.html',login=0,
-									pagename='',
-									username='',
-									pagecontent=fp)
+			self.response.write('Please Login First!')
+
+	def post(self):
+		content = self.request.get('content')
+		path = self.request.path
+		pagename = path[7:]
+		fp = Pages.all().filter('pagename =', pagename).get()
+		if not fp:
+			a = Pages(pagename=pagename, content=content)
+			a.put()
+		else:
+			fp.content = content
+			fp.put()
+		self.redirect('/%s' %pagename)
 
 class MainHandler(webapp2.RequestHandler):
     def get(self):
         self.response.write('Hello world!')
 
 app = webapp2.WSGIApplication([
-    ('/', FrontPage),
     ('/signup', Signup),
     ('/login', Login),
-    ('/logout', Logout)
+    ('/logout', Logout),
+    ('/_edit'+'/(?:[a-zA-Z0-9_-]+/?)*', EditPage),
+    ('/(?:[a-zA-Z0-9_-]+/?)*', WikiPage)
 ], debug=True)
