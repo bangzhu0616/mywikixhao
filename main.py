@@ -52,6 +52,21 @@ class User(db.Model):
 	email = db.StringProperty()
 	created = db.DateTimeProperty(auto_now_add = True)
 
+def get_data(pagename, update = False):
+	key = pagename
+	content = memcache.get(key)
+	if content is None or update:
+		fp = Pages.all().filter('pagename =', pagename).get()
+		if fp:
+			memcache.set(key, fp.content)
+		else:
+			memcache.set(key,'')
+	return content
+
+def set_data(pagename, content):
+	key = pagename
+	memcache.set(key, content)
+
 class Signup(WikiHandler):
 	def get(self):
 		self.render("signup.html")
@@ -122,7 +137,8 @@ class WikiPage(WikiHandler):
 	def get(self):
 		path = self.request.path
 		pagename = path[1:]
-		fp = Pages.all().filter('pagename =', pagename).get()
+		content = get_data(pagename)
+		# fp = Pages.all().filter('pagename =', pagename).get()
 		user = self.request.cookies.get('user_id')
 		if pagename=='':
 			if user:
@@ -132,13 +148,13 @@ class WikiPage(WikiHandler):
 					self.render('wikipage.html', 
 										pagename=pagename,
 										username=u_name.username,
-										pagecontent=fp)
+										pagecontent=content)
 			else:
 				self.render('wikipage.html',
 										pagename=pagename,
 										username='',
-										pagecontent=fp)
-		elif fp:
+										pagecontent=content)
+		elif content:
 			if user:
 				u_id = user.split('|')[0]
 				u_name = User.get_by_id(int(u_id))
@@ -146,12 +162,12 @@ class WikiPage(WikiHandler):
 					self.render('wikipage.html', 
 										pagename=pagename,
 										username=u_name.username,
-										pagecontent=fp)
+										pagecontent=content)
 			else:
 				self.render('wikipage.html',
 										pagename=pagename,
 										username='',
-										pagecontent=fp)
+										pagecontent=content)
 		else:
 			self.redirect('/_edit/'+pagename)
 
@@ -179,9 +195,11 @@ class EditPage(WikiHandler):
 		fp = Pages.all().filter('pagename =', pagename).get()
 		if not fp:
 			a = Pages(pagename=pagename, content=content)
+			set_data(pagename, content)
 			a.put()
 		else:
 			fp.content = content
+			set_data(pagename, content)
 			fp.put()
 		self.redirect('/%s' %pagename)
 
