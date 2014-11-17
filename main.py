@@ -26,7 +26,7 @@ jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir),
 from google.appengine.ext import db
 from google.appengine.api import memcache
 
-from signup import *
+from accounts import *
 
 class WikiHandler(webapp2.RequestHandler):
 	def write(self, *a, **kw):
