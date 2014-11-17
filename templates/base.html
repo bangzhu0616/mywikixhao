@@ -9,14 +9,14 @@
 	<div class="header">
 		<a href="/" class="main-title">Xiaofeng' Wiki</a>
 		<span class="edithistory">
-			{% if login %}
+			{% if username %}
 				<a href="/_edit/{{pagename}}">edit</a>|
 			{% endif %}
 			<a href="/_history/{{pagename}}">history</a>
 		</span>
 
 		<span class="loginout">
-			{% if login %}
+			{% if username %}
 				{{username}}(<a href="/logout">logout</a>)
 			{% else %}
 				<a href="/login">login</a> |

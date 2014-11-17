@@ -124,17 +124,31 @@ class WikiPage(WikiHandler):
 		pagename = path[1:]
 		fp = Pages.all().filter('pagename =', pagename).get()
 		user = self.request.cookies.get('user_id')
-		if fp:
+		if pagename=='':
 			if user:
 				u_id = user.split('|')[0]
 				u_name = User.get_by_id(int(u_id))
 				if u_name and read_secure_cookie(self, 'user_id'):
-					self.render('wikipage.html', login=1, 
+					self.render('wikipage.html', 
 										pagename=pagename,
 										username=u_name.username,
 										pagecontent=fp)
 			else:
-				self.render('wikipage.html',login=0,
+				self.render('wikipage.html',
+										pagename=pagename,
+										username='',
+										pagecontent=fp)
+		elif fp:
+			if user:
+				u_id = user.split('|')[0]
+				u_name = User.get_by_id(int(u_id))
+				if u_name and read_secure_cookie(self, 'user_id'):
+					self.render('wikipage.html', 
+										pagename=pagename,
+										username=u_name.username,
+										pagecontent=fp)
+			else:
+				self.render('wikipage.html',
 										pagename=pagename,
 										username='',
 										pagecontent=fp)
@@ -151,7 +165,7 @@ class EditPage(WikiHandler):
 			u_id = user.split('|')[0]
 			u_name = User.get_by_id(int(u_id))
 			if u_name and read_secure_cookie(self, 'user_id'):
-				self.render('editpage.html', login=1,
+				self.render('editpage.html',
 								pagename = pagename,
 								username = u_name.username,
 								pagecontent=fp)
