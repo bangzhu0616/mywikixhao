@@ -61,3 +61,10 @@ a:link {
 a:hover {
 	text-decoration: underline;
 }
+
+textarea {
+	width: 90%;
+	height: 400px;
+	font-size: 17px;
+	font-family: monospace;
+}

@@ -24,6 +24,7 @@ jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir),
 										autoescape = True)
 
 from google.appengine.ext import db
+from google.appengine.api import memcache
 
 from signup import *
 
@@ -115,7 +116,7 @@ class Login(WikiHandler):
 class Logout(WikiHandler):
 	def get(self):
 		self.response.headers.add_header('Set-Cookie', "user_id=; Path=/")
-		self.redirect('/')
+		self.redirect(self.request.referer)
 
 class WikiPage(WikiHandler):
 	def get(self):
