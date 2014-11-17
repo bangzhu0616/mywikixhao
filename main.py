@@ -59,8 +59,10 @@ def get_data(pagename, update = False):
 		fp = Pages.all().filter('pagename =', pagename).get()
 		if fp:
 			memcache.set(key, fp.content)
+			content = fp.content
 		else:
 			memcache.set(key,'')
+			content = ''
 	return content
 
 def set_data(pagename, content):
