@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block content %}
+	<br>
+	<br>
+	<br>
+	<div class="history">
+		<table>
+			{% for h in pagecontent %}
+				<tr>
+					<td class="histtime">{{h.created.strftime("%a, %d %b %Y %H:%M:%S")}}</td>
+					<td class="histcontent">{{h.content}}</td>
+					<td class="histview"><a href="/{{pagename}}?v={{h.version}}">view</a></td>
+					<td class="histedit"><a href="/_edit/{{pagename}}?v={{h.version}}">edit</a></td>
+				</tr>
+			{% endfor %}
+		</table>
+	</div>
+{% endblock %}
+		

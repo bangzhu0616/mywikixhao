@@ -40,11 +40,11 @@ class WikiHandler(webapp2.RequestHandler):
 		self.write(self.render_str(template,**kw))
 
 class Pages(db.Model):
-	id = db.IntegerProperty()
 	pagename = db.StringProperty()
 	content = db.TextProperty(required = True)
 	created = db.DateTimeProperty(auto_now_add = True)
 	last_modified = db.DateTimeProperty(auto_now = True)
+	version = db.IntegerProperty(required = True)
 
 class User(db.Model):
 	username = db.StringProperty(required = True)
@@ -139,7 +139,13 @@ class WikiPage(WikiHandler):
 	def get(self):
 		path = self.request.path
 		pagename = path[1:]
-		content = get_data(pagename)
+		para = self.request.query_string
+		if para:
+			version  = int(para[2:])
+			fp = db.GqlQuery("select * from Pages where version=:1", version).get()
+			content = fp.content
+		else:
+			content = get_data(pagename)
 		# fp = Pages.all().filter('pagename =', pagename).get()
 		user = self.request.cookies.get('user_id')
 		if pagename=='':
@@ -177,7 +183,12 @@ class EditPage(WikiHandler):
 	def get(self):
 		path = self.request.path
 		pagename = path[7:]
-		fp = Pages.all().filter('pagename =', pagename).get()
+		para = self.request.query_string
+		if para:
+			version  = int(para[2:])
+			fp = db.GqlQuery("select * from Pages where version=:1", version).get()
+		else:
+			fp = Pages.all().filter('pagename =', pagename).order('-version').get()
 		user = self.request.cookies.get('user_id')
 		if user:
 			u_id = user.split('|')[0]
@@ -196,14 +207,33 @@ class EditPage(WikiHandler):
 		pagename = path[7:]
 		fp = Pages.all().filter('pagename =', pagename).get()
 		if not fp:
-			a = Pages(pagename=pagename, content=content)
+			a = Pages(pagename=pagename, content=content, version=1)
 			set_data(pagename, content)
 			a.put()
 		else:
-			fp.content = content
+			maxversions = Pages.all().filter('pagename =', pagename).order('-version').get()
+			version = maxversions.version+1
+			a = Pages(pagename=pagename, content=content, version=version)
 			set_data(pagename, content)
-			fp.put()
+			a.put()
 		self.redirect('/%s' %pagename)
+
+class HistPage(WikiHandler):
+	def get(self):
+		path = self.request.path
+		pagename = path[10:]
+		# hists = Pages.all().filter('pagename =', pagename).get()
+		hists = db.GqlQuery("select * from Pages order by version desc")
+		user = self.request.cookies.get('user_id')
+		if user:
+			u_id = user.split('|')[0]
+			u_name = User.get_by_id(int(u_id))
+			if u_name and read_secure_cookie(self, 'user_id'):
+				self.render('history.html', 
+										pagename=pagename,
+										username=u_name.username,
+										pagecontent=hists)
+
 
 class MainHandler(webapp2.RequestHandler):
     def get(self):
@@ -214,5 +244,6 @@ app = webapp2.WSGIApplication([
     ('/login', Login),
     ('/logout', Logout),
     ('/_edit'+'/(?:[a-zA-Z0-9_-]+/?)*', EditPage),
+    ('/_history'+'/(?:[a-zA-Z0-9_-]+/?)*', HistPage),
     ('/(?:[a-zA-Z0-9_-]+/?)*', WikiPage)
 ], debug=True)
